@@ -1,9 +1,7 @@
 package com.challange.sistem;
 
 
-import io.swagger.annotations.Api;
 import org.openapitools.client.ApiClient;
-import org.openapitools.client.ApiException;
 import org.openapitools.client.api.BlockApi;
 import org.openapitools.client.api.TransactionEntryApi;
 import org.openapitools.client.model.Block;
