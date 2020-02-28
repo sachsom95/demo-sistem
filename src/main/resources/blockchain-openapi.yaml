@@ -1,0 +1,522 @@
+# Mastercard Blockchain API
+swagger: "2.0"
+info:
+  title: Mastercard Blockchain
+  description: |
+    The Mastercard Blockchain REST/JSON API provides a foundation for prototyping
+    blockchain applications and to become familiar with the principles of blockchain
+    technology, all using an advanced, high-performance, blockchain implementation
+    from Mastercard.
+
+    The API allows you to specify your own transaction types and flows to meet any
+    business need. A good guideline to using blockchain effectively is to first decide
+    "What data is it that we need to share?".
+
+    As your use case progresses, you will likely want to move from a fully hosted
+    "Blockchain as a Service" solution to running your own nodes and value stores
+    founded on our lower-level protocols and core services to truly leverage the
+    power of this inherently distributed technology. Talk to us when you reach this
+    point and wish to move towards a fully distributed, enterprise-grade solution.
+
+    In this API, you will find extensive use of "Base58" encoding. This
+    encoding has many open source libraries available, and for all popular
+    languages, but is unlikely to be included by default in your development
+    platform. It is important to select a library implementation that uses the
+    character set:
+
+    `123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz`
+
+    We also use certain conventions with regard to parameter naming:
+    - `id` will always be an unsigned 32-bit integer (uint32)
+    - `ref` will always be a hex-encoded SHA-256D hash digest of the actual value
+       it references
+    - `address` will always be a Base58Check encoded hash of a public key
+
+    Finally, you will see frequent references to the `slot` parameter. This is
+    equivalent to "block height" and is an incrementing integer. The genesis block
+    has slot number 0.
+
+  version: "19.8.0"
+  x-artifactId: blockchain
+  x-json-native: true
+  contact:
+    name: Core Blockchain Team
+    email: blockchain_dev@mastercard.com
+host: 54.91.216.164
+schemes:
+  - https
+basePath: /chain/api/network
+produces:
+  - application/json
+
+paths:
+  /general-network-status:
+    get:
+      summary: Gets general network status information
+      description: |
+        Gets general metadata about the current state of the blockchain network.
+        Useful for building dashboards.
+      tags:
+        - Status
+      responses:
+        200:
+          description: Successful completion
+          schema:
+            $ref: '#/definitions/StatusResponse'
+        401:
+          description: Authorization error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        default:
+          description: System error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+      x-samples:
+          -
+            name: example_get_status
+            type: sample
+            request:
+              application/json: |-
+                {
+                }
+            response:
+              application/json: |-
+                {
+                    "alerts": [],
+                    "applications": [
+                        "TT01",
+                        "AA00"
+                    ],
+                    "current": {
+                        "ref": "0d612959ceccb8fbef59e8a307312804ed6e94ac72b93fb0efd709036d12a691",
+                        "slot": 15285
+                    },
+                    "genesis": {
+                        "ref": "a97bfabe685444b28d6ff4482bfa88e23604906450ffb8bf1ee1a390ec85a6d4",
+                        "slot": 0
+                    },
+                    "network": 1513115205,
+                    "version": "1.0.0.0",
+                    "witnesses": [
+                        "ZWc8Dmy5Q6MohBa1xm5b7Wod7tkWimKLUD",
+                        "ZGTG8qgQbf9k1gGFYzcEdnU4UQbfContrA",
+                        "ZKP3RSLQjAyA4ziDT1NDBTamew3WVM2nrC",
+                        "ZW2kDxr9kNZRCtZ2bYdX9qUECXwN7JP6jT",
+                        "ZY4pPSt1FjPbviF8bV5PFWVqMAEdJq1TG9",
+                        "ZHdDHZzcc1V2Z9Xwj6KcwyrGfX2S4UAWiq",
+                        "ZWpUY12yn7J9Ltnvw96dYkvRq7K41su6je",
+                        "ZET95WA8z5UZUH3pY9H6nJWivgL3vfxp2g"
+                    ]
+                }
+
+  /blocks:
+    get:
+      summary: Get information about the last confirmed block or a range of blocks
+      description: |
+        This call returns the last confirmed block, or a range of blocks.
+
+        To get a range of blocks, use the `offset` and `count` parameters. Specifying
+        only the `offset` parameter will get a range of blocks up to the current slot,
+        or up to the maximum count.
+
+        Note that the maximum value for 'count' is 600.
+
+        For each returned item, the data will contain header information from
+        the block binary, and references to the block entries via the merkle roots.
+
+      parameters:
+        - name: offset
+          in: query
+          type: integer
+          format: int64
+          minimum: 0
+          description: Specify the starting slot to return
+          x-example: 0
+        - name: count
+          in: query
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 600
+          description: The desired number of slots
+          x-example: 50
+      tags:
+        - Block
+      responses:
+        200:
+          description: Successful completion
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Block'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        401:
+          description: Authorization error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        default:
+          description: System error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+      x-samples:
+          -
+            name: example_get_blocks
+            type: sample
+            request:
+              application/json: |-
+                {
+                }
+            response:
+              application/json: |-
+                [
+                    {
+                        "authority": "ZGZXq9M5QeEQ14abikeZ23sqVoBXsfqoPx",
+                        "hash": "db24afb03b83f14f075d80ae166e99c0c1b2869caaaee8966877c35218782df5",
+                        "nonce": "6614521796352360458",
+                        "partitions": [],
+                        "previousBlock": "0fc2037d7caf6db1be663ff70a18f74122daa69e601b84c6c7db4ab36b14f894",
+                        "signature": "3046022100af0f765528ac6d3497810d6bfd6ccf36b1a01874cb200cd9f5d3ed63fad709f8022100c4b148b0567c515bf47efe92359010d60830cdfebe647b861fcaec63394e9e23",
+                        "slot": 15036,
+                        "version": "0.0.0.1"
+                    },
+                    {
+                        "authority": "ZGmsJ6uv396UmYimgkKRrbruHx9cn74w4p",
+                        "hash": "46fceffc46cafdf0abcae40e93c458b55e635094df18476c8630c37e2a51fa6a",
+                        "nonce": "1855661716779525249",
+                        "partitions": [],
+                        "previousBlock": "db24afb03b83f14f075d80ae166e99c0c1b2869caaaee8966877c35218782df5",
+                        "signature": "3045022031d8c67cb4603c7acf53b1b8a274401f81c3421a53ed5c4381610f43205c595f022100d3d032115b3e1d47f5376f882793bc99d4f11bc0292d518edc3b76bf3040ddda",
+                        "slot": 15037,
+                        "version": "0.0.0.1"
+                    },
+                    {
+                        "authority": "ZNySXtQVqsqTSzuQ6cu2urzTMxkLZoLitG",
+                        "hash": "8e54e7c14014fcb0ed0eec1138a4dcca18b8a1244e977f431264d1e936564104",
+                        "nonce": "2152592180215829185",
+                        "partitions": [],
+                        "previousBlock": "46fceffc46cafdf0abcae40e93c458b55e635094df18476c8630c37e2a51fa6a",
+                        "signature": "3045022100ebd13b6c60d5684a4f679defac844dc5113094d26122afc70597f69e3da0ce9d0220392ed26db1542b3e0aa1a18a6d801f11feede4ffe8c94ca93918f4ae30e885b9",
+                        "slot": 15038,
+                        "version": "0.0.0.1"
+                    }
+                ]
+          -
+            name: test_get_blocks
+            type: test
+            request:
+              application/json: |-
+                {
+                }
+            response:
+              application/json: |-
+                {
+                }
+
+  /blocks/{id}:
+    get:
+      summary: Gets a specified block by id
+      description: |
+        A specific block may be retrieved by its hash key or by its slot number.
+        This is useful when navigating the chain.
+      parameters:
+        - name: id
+          in: path
+          description: Id can be the slot number or the hash of the block to retrieve
+          required: true
+          type: string
+          format: hex
+          x-example: 1503574734
+      tags:
+        - Block
+      responses:
+        200:
+          description: Details about the referenced block
+          schema:
+            $ref: '#/definitions/Block'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        401:
+          description: Authorization error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        default:
+          description: System error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+      x-samples:
+          -
+            name: example_get_block
+            type: sample
+            request:
+              application/json: |-
+                {
+                   "id":"15227"
+                }
+            response:
+              application/json: |-
+                {
+                    "authority": "Zb732ZNKQmYGczTPPUYUCqes1zBDMyNtJr",
+                    "hash": "be5bf9f0af72d1e95f8a8f6d45149217812dd803538d3305c9cad3174ad94ba1",
+                    "nonce": "4414089999069869766",
+                    "partitions": [
+                        {
+                            "application": "AA00",
+                            "entries": [
+                                "cc7f7ea76fb1386bf32f195f7b77e3cee48bfb66e16f0bf1d881832410af027f"
+                            ],
+                            "entryCount": 1,
+                            "merkleRoot": "89b8f67d6ce9c5233010159f1ebdfa9e86d45776d03e18354340801776ca6387"
+                        }
+                    ],
+                    "previousBlock": "f607023d736f10d1f57c0cff6e9cd3ab5f282c4298fbf2b83b7cfb9473058baa",
+                    "signature": "3046022100edb96e3738ed4f666a8bf746f166382d7919922a38c68a41ebed5c2b029b827502210091befa6ecdd8b7537c0803188de1dcf6f28924171940db27150abad5497d4145",
+                    "slot": 15227,
+                    "version": "0.0.0.1"
+                }
+
+
+  /entries/{hash}:
+    get:
+      summary: Information about the specified transaction entry
+      description: |
+        Returns full detail of the value of the blockchain entry
+        referenced by the specified hashkey, if it has been previously recorded
+        by this node.
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          type: string
+          format: base58check
+          description: The hash of the entry to retrieve
+          x-example: "1e6fc898c0f0853ca504a29951665811315145415fa5bdfa90253efe1e2977b1"
+      tags:
+        - TransactionEntry
+      responses:
+        200:
+          description: Information about the entry
+          schema:
+            $ref: '#/definitions/EntryInfo'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        401:
+          description: Authorization error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+        default:
+          description: Authorization error
+          schema:
+            $ref: '#/definitions/ErrorApiResponse'
+      x-samples:
+          -
+            name: example_get_entry
+            type: sample
+            request:
+              application/json: |-
+                {
+                   "hash":"cc7f7ea76fb1386bf32f195f7b77e3cee48bfb66e16f0bf1d881832410af027f"
+                }
+            response:
+              application/json: |-
+                {
+                    "hash": "cc7f7ea76fb1386bf32f195f7b77e3cee48bfb66e16f0bf1d881832410af027f",
+                    "slot": 15227,
+                    "status": "confirmed",
+                    "value": "1258555549443a2035393765333038382d326231312d343837352d613035322d32626261353132633261383220484f53543a2054686f6d61732d54726569746c696e676572732d4d6163426f6f6b2d50726f2d332e6c6f63616c"
+                }
+
+definitions:
+  StatusResponse:
+    type: object
+    properties:
+      network:
+        type: integer
+        # swagger validator requires a format; network is defined as a fixed32 in z0
+        format: int32
+        description: |
+          For the main chain, this id should always be the integer 1513115205.
+        example: 1513115205
+      version:
+        type: string
+        default: "1.0.0.0"
+        description: |
+          Note that this is returned as a semantically versioned string.
+          Versions of messages should be able to be transmitted on the
+          binary protocol as 32-bit integers.
+          e.g. The version "1.0.0.0" represents the actual big-endian byte
+          array [1,0,0,0] which is equivalent to a uint32 value of
+          16777216.
+        example: "1.0.0.0"
+      witnesses:
+        type: array
+        items:
+          type: string
+          format: address
+        description: The blockchain addresses of audit nodes which have signed block confirmations.
+      applications:
+        type: array
+        items:
+          type: string
+          example: "['MA99']"
+        description: The application identifiers available at this node
+      genesis:
+        $ref: '#/definitions/GenesisBlock'
+      current:
+        $ref: '#/definitions/CurrentBlock'
+      alerts:
+        type: array
+        items:
+          type: string
+        description: Informational alerts such as upcoming version or network configuration changes
+
+  GenesisBlock:
+    type: object
+    properties:
+      slot:
+        type: integer
+        format: int64
+        description: The slot number of the first block in the chain on this network
+        example: 1502882325
+      ref:
+        type: string
+        format: hex
+        description: Hash of the first block in the chain on this network
+        example: "671d13640e28b3befe225a48a9b919a3ba424db0b8807ee57661b61a7555f763"
+    description: Basic information about first block in the chain on this network
+
+  CurrentBlock:
+    type: object
+    properties:
+      slot:
+        type: integer
+        format: int64
+        description: The slot number of the last confirmed block
+        example: 1502893442
+      ref:
+        type: string
+        format: hex
+        description: Hash of the last confirmed block
+        example: "747443ae8d73dbb381770cea820ec6a0e9548b299c8d2aadb12f113e949158e7"
+    description: Basic information about the current block which is last confirmed block in the chain on this network
+
+  Block:
+    type: object
+    properties:
+      hash:
+        type: string
+        format: hex
+        description: The hash of this block
+      slot:
+        type: integer
+        format: int64
+        description: The slot number of this block
+      version:
+        type: string
+        description: The version of the block format. Currently, 1.0.0.0
+      previousBlock:
+        type: string
+        format: hex
+        description: The SHA256D hash of the previous block, encoded as hex
+      partitions:
+        type: array
+        items:
+          $ref: '#/definitions/DataPartition'
+      nonce:
+        type: string
+        description: Random number used in the generation of this block
+      authority:
+        type: string
+        format: address
+        description: The signing identity from the audit nodes as a
+          blockchain address
+      signature:
+        type: string
+        format: hex
+        description: The signature confirmation from the audit nodes
+
+  DataPartition:
+    type: object
+    properties:
+      application:
+        type: string
+        description: Application identifier
+        example: AA01
+      entryCount:
+        type: integer
+        format: int32
+        description: The number of entries referred to by the merkle root hash
+        example: 1
+      merkleRoot:
+        type: string
+        format: hex
+        description: Its the root hash of all entries for this application in this block
+      entries:
+        description: List of hashes for all entries in this application partition
+        type: array
+        items:
+          type: string
+          format: key
+
+  EntryInfo:
+    type: object
+    properties:
+      hash:
+        type: string
+        format: hex
+        description: Hash of the value written onto the chain. Can be used to lookup the entry.
+        example: "50cbc906b2d5e4e795b9aa79ad35e7b9989839a0a0fc95b2ecd063529db365fd"
+      slot:
+        type: integer
+        format: int64
+        description: Slot the entry is confirmed in; 0 if none.
+        example: 1502899441
+      status:
+        type: string
+        description: Status of the entry on the chain pending\confirmed or rejected.
+        example: "confirmed"
+      value:
+        type: string
+        description: Hex representation of the value written onto the chain.
+        example: "0a0d5465737420446f63756d656e74"
+
+  Error:
+      type: object
+      properties:
+          Description:
+              type: string
+          Details:
+              type: string
+          ReasonCode:
+              type: string
+          Recoverable:
+              type: boolean
+          Source:
+              type: string
+      title: Error
+
+  ErrorApiResponse:
+      type: object
+      required:
+        - Errors
+      properties:
+          Errors:
+              $ref: '#/definitions/Errors'
+      title: ErrorApiResponse
+
+  Errors:
+      type: object
+      required:
+        - Error
+      properties:
+          Error:
+              type: array
+              items:
+                  $ref: '#/definitions/Error'
+      title: Errors
