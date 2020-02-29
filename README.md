@@ -1,5 +1,5 @@
-#API
-##Endpoints:
+# API
+## Endpoints:
 ### Network Status
 Gets general metadata about the current state of the blockchain network.
 * GET
